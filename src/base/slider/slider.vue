@@ -3,7 +3,9 @@
     <div class="slider-group" ref="sliderGroup">
       <slot></slot>
     </div>
-    <div class="dots"></div>
+    <div class="dots">
+      <span class="dot" v-for="(item, index) in dots" :key="index" :class="{active: currentPageIndex === index}"></span>
+    </div>
   </div>
 </template>
 
@@ -12,6 +14,12 @@ import BScroll from 'better-scroll'
 import {addClass} from 'common/js/dom'
 
 export default {
+  data() {
+    return {
+      dots: [],
+      currentPageIndex: 0
+    }
+  },
   props: {
     // 循环轮播
     loop: {
@@ -32,15 +40,17 @@ export default {
 
   mounted() {
     setTimeout(() => {
-      this._setSilderWidth()
+      this._setSliderWidth()
       this._initSlider()
+      this._initDots()
     }, 20)
   },
 
   methods: {
     // 设置轮播图宽度
-    _setSilderWidth() {
+    _setSliderWidth() {
       this.children = this.$refs.sliderGroup.children
+      console.log(this.children.length)
 
       let width = 0
       let sliderWidth = this.$refs.slider.clientWidth
@@ -59,6 +69,11 @@ export default {
 
       this.$refs.sliderGroup.style.width = width + 'px'
     },
+
+    _initDots() {
+      this.dots = new Array(this.children.length)
+    },
+
     // 初始化轮播图
     _initSlider() {
       this.slider = new BScroll(this.$refs.slider, {
@@ -70,6 +85,14 @@ export default {
         snapThreshold: 0.3,
         snapSpeed: 400,
         click: true
+      })
+
+      this.slider.on('scrollEnd', () => {
+        let pageIndex = this.slider.getCurrentPage().pageX
+        if (this.loop) {
+          pageIndex -= 1
+        }
+        this.currentPageIndex = pageIndex
       })
     }
   }
@@ -104,5 +127,17 @@ export default {
       left 0
       bottom 12px
       text-align center
+      font-size 0
+      .dot
+        display inline-block
+        margin 0 4px
+        width 8px
+        height 8px
+        border-radius 50%
+        background $color-text-l
+        &.active
+          width 20px
+          border-radius 5px
+          backround $color-text-ll
 
 </style>
