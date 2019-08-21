@@ -41,16 +41,25 @@ export default {
   mounted() {
     setTimeout(() => {
       this._setSliderWidth()
-      this._initSlider()
       this._initDots()
+      this._initSlider()
+      if (this.autoPlay) {
+        this._play()
+      }
+      window.addEventListener('resize', () => {
+        if (!this.slider) {
+          return
+        }
+        this._setSliderWidth(true)
+        this.slider.refresh()
+      })
     }, 20)
   },
 
   methods: {
     // 设置轮播图宽度
-    _setSliderWidth() {
+    _setSliderWidth(isResize) {
       this.children = this.$refs.sliderGroup.children
-      console.log(this.children.length)
 
       let width = 0
       let sliderWidth = this.$refs.slider.clientWidth
@@ -63,7 +72,7 @@ export default {
       }
 
       // 循环播放需要在列表左右各加一个sliderWidth，保证无缝循环
-      if (this.loop) {
+      if (this.loop && !isResize) {
         width += 2 * sliderWidth
       }
 
@@ -80,20 +89,29 @@ export default {
         scrollX: true,
         scrollY: false,
         momentum: false,
-        snap: true,
-        snapLoop: this.loop,
-        snapThreshold: 0.3,
-        snapSpeed: 400,
-        click: true
+        snap: {
+          loop: this.loop,
+          threshold: 0.3,
+          speed: 400
+        }
       })
 
       this.slider.on('scrollEnd', () => {
         let pageIndex = this.slider.getCurrentPage().pageX
-        if (this.loop) {
-          pageIndex -= 1
-        }
         this.currentPageIndex = pageIndex
+
+        if (this.autoPlay) {
+          clearTimeout(this.timer)
+          this._play()
+        }
       })
+    },
+
+    _play() {
+      let pageIndex = this.currentPageIndex + 1
+      this.timer = setTimeout(() => {
+        this.slider.goToPage(pageIndex, 0, 400)
+      }, this.interval)
     }
   }
 }
